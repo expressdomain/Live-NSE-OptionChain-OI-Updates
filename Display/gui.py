@@ -3,6 +3,16 @@ from datetime import datetime
 from ttkwidgets.autocomplete import AutocompleteEntry
 import tkinter as tk
 from tkinter import ttk
+from matplotlib import pyplot as plt
+import matplotlib
+
+matplotlib.use('TkAgg')
+
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg,
+    NavigationToolbar2Tk
+)
 import threading
 
 from utils.scrape import get_data
@@ -35,19 +45,14 @@ class Display(tk.Frame):
         self.last_updated_lab = tk.Label(self, textvariable = self.last_updated_var, font= self.FONT)
         self.last_updated_lab.pack(pady=5)
 
-        self.__columns = ('#1', '#2', '#3', '#4', '#5')
-        self.tree = ttk.Treeview(self, columns=self.__columns, show='headings', selectmode='none')
-        self.tree.tag_configure('top5', background='orange')
+        self.__columns = ('#1', '#2', '#3')
+        self.tree = ttk.Treeview(self, columns=self.__columns, show='headings', selectmode='browse')
         self.tree.column('#1', anchor=tk.CENTER)
         self.tree.column('#2', anchor=tk.CENTER)
         self.tree.column('#3', anchor=tk.CENTER)
-        self.tree.column('#4', anchor=tk.CENTER)
-        self.tree.column('#5', anchor=tk.CENTER)
         self.tree.heading('#1', text='Strike Prc.')
         self.tree.heading('#2', text='PE OI')
-        self.tree.heading('#3', text='PE OI CNG %')
-        self.tree.heading('#4', text='CE OI')
-        self.tree.heading('#5', text='CE OI CNG %')
+        self.tree.heading('#3', text='CE OI')
         
         self.tree.tag_configure(tagname="green", background="#4feb34")
         self.tree.tag_configure(tagname="red", background="#f03329")
@@ -70,13 +75,39 @@ class Display(tk.Frame):
         self.script_entry.grid(row=1, column=0,pady=2, padx=30)  
 
         self.delay_label = ttk.Label(self.frame_controls, text="Delay (Mins)", **self.font)
-        self.delay_var = tk.StringVar(value="0.5")
+        self.delay_var = tk.StringVar(value="60")
         self.delay_input = ttk.Entry(self.frame_controls, textvariable=self.delay_var, width=8)
         self.delay_label.grid(row=0, column=2,pady=6, padx=30)
         self.delay_input.grid(column=2, row=1, padx=2)
 
         self.update_btn = ttk.Button(self.frame_controls, text="Update Info", command=self.manual_update)
         self.update_btn.grid(column=3, row=0, rowspan=2, padx=2)
+         # prepare data
+        self.data = {
+            'CE' : 0,
+            'PE' : 0
+        }
+        options = self.data.keys()
+        total_OI = self.data.values()
+
+        # create a figure
+        self.figure = Figure(figsize=(3, 2), dpi=100)
+
+        # create FigureCanvasTkAgg object
+        self.figure_canvas = FigureCanvasTkAgg(self.figure, self.parent)
+
+        # create the toolbar
+        NavigationToolbar2Tk(self.figure_canvas, self.parent)
+
+        # create axes
+        self.axes = self.figure.add_subplot()
+
+        # create the barchart
+        self.axes.bar(options, total_OI)
+        self.axes.set_title('Total OI')
+        self.axes.set_ylabel('OI')
+
+        self.figure_canvas.get_tk_widget().pack(padx=10,side=tk.RIGHT, fill=tk.BOTH, expand=1)
 
     def manual_update(self):
         if len(threading.enumerate()) < 2:
@@ -88,7 +119,8 @@ class Display(tk.Frame):
         print(f"[REFRESH TIME] {now}")
         date = datetime.strftime(self.expiry.get_date(), '%d-%b-%Y')
         stock_name = self.script_var.get().strip()
-        data = get_data(date, stock_name)
+        raw_data = get_data(date, stock_name)
+        data = raw_data[0]
         if data is None:
             return
         data_main = sorted(data, key=lambda i: i['PE OI'], reverse=True)[:2] + sorted(data, key=lambda i: i['CE OI'], reverse=True)[:2]
@@ -98,7 +130,14 @@ class Display(tk.Frame):
             for i in range(len(data_main)):
                 vals = data_main[i].values()
                 self.tree.insert("", tk.END, iid=i, value=tuple(vals))
-            
+            self.data = raw_data[1]
+            options = self.data.keys()
+            total_OI = self.data.values()
+            self.axes.clear()
+            self.axes.bar(options, total_OI, color=["green", "red"])
+            self.axes.set_title(stock_name)
+            self.axes.set_ylabel('OI')
+            self.parent.update()
             self.cur_stock_var.set("Current Stock: " + stock_name)
             now = datetime.now().strftime("%H:%M:%S")
             self.last_updated_var.set("Last Updated: " + now)

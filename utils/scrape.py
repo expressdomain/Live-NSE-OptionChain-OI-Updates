@@ -24,7 +24,10 @@ def get_data(expiryDate, symbol):
     except json.JSONDecodeError:
         print("[NO DATA RETURNED]")
         return
-
+    total_oi = {
+        "CE" : data['filtered']['CE']['totOI'],
+        "PE" : data['filtered']['PE']['totOI']
+    }
     result = list()
     for i in data['records']['data']:
         keys = list(i.keys())
@@ -33,8 +36,6 @@ def get_data(expiryDate, symbol):
                 result.append({
                     'strikePrice' : i['strikePrice'],
                     'PE OI': i.get('PE', {'openInterest' : 0})['openInterest'],
-                    'PE OICng': round(i.get('PE', {'pchangeinOpenInterest' : 0})['pchangeinOpenInterest'], 2),
-                    'CE OI': i.get('CE', {'openInterest' : 0})['openInterest'], 
-                    'CE OICng': round(i.get('CE', {'pchangeinOpenInterest' : 0})['pchangeinOpenInterest'], 2)
+                    'CE OI': i.get('CE', {'openInterest' : 0})['openInterest']
                 })
-    return result
+    return result, total_oi

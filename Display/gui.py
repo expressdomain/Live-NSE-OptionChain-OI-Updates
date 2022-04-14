@@ -1,5 +1,6 @@
 import tkcalendar as tkcal 
 from datetime import datetime
+from torch import diff
 from ttkwidgets.autocomplete import AutocompleteEntry
 import tkinter as tk
 from tkinter import ttk
@@ -109,6 +110,10 @@ class Display(tk.Frame):
 
         self.figure_canvas.get_tk_widget().pack(padx=10,side=tk.RIGHT, fill=tk.BOTH, expand=1)
 
+        self.OI_diff_percent_var = tk.StringVar(self)
+        self.OI_diff_percent_lab = tk.Label(self, textvariable = self.OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
+        self.OI_diff_percent_lab.pack(pady=5)
+
     def manual_update(self):
         if len(threading.enumerate()) < 2:
             self.load_data()
@@ -133,6 +138,12 @@ class Display(tk.Frame):
             self.data = raw_data[1]
             options = self.data.keys()
             total_OI = self.data.values()
+            diff_per = round(((self.data["CE"] - self.data["PE"]) / self.data["CE"]) * 100, 2)
+            self.OI_diff_percent_var.set(f"OI Difference: {diff_per}%")
+            if diff_per > 0:
+                self.OI_diff_percent_lab.config(fg="green")
+            else:
+                self.OI_diff_percent_lab.config(fg="red")
             self.axes.clear()
             self.axes.bar(options, total_OI, color=["green", "red"])
             self.axes.set_title(stock_name)

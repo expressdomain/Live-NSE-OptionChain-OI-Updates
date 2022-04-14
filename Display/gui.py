@@ -4,11 +4,9 @@ from ttkwidgets.autocomplete import AutocompleteEntry
 import tkinter as tk
 from tkinter import ttk
 import threading
-import os
 
 from utils.scrape import get_data
 
-print(os. listdir())
 with open(r"./Display/stocks.txt") as f:
     STOCKS = [x.strip() for x in f]
 
@@ -22,6 +20,7 @@ class Display(tk.Frame):
         self.FONT = ('Helvetice', 14)
 
         self.style.configure('Treeview', font = self.FONT, rowheight=30)
+        self.style.configure('Treeview.Heading', font = self.FONT)
         self.style.configure('my.Radiobutton', font = self.FONT)
 
         self.font = {
@@ -57,14 +56,14 @@ class Display(tk.Frame):
 
         self.frame_controls = tk.Frame(self)
         self.frame_controls.pack(padx=5, pady=10)
-        self.expiry_lab = tk.Label(self.frame_controls, text='Last Date: ', font=('Helvetica', 13))
+        self.expiry_lab = tk.Label(self.frame_controls, text='Last Date', font=self.FONT)
         self.expiry = tkcal.DateEntry(self.frame_controls, selectmode='day')
         self.expiry_lab.grid(row=0, column=1, padx=20, pady=5)
         self.expiry.grid(row=1, column=1, padx=20, pady=5)
 
         
         
-        self.script_label = ttk.Label(self.frame_controls, text="script", **self.font)
+        self.script_label = ttk.Label(self.frame_controls, text="Script", **self.font)
         self.script_var = tk.StringVar(self.frame_controls, value="NIFTY")
         self.script_entry = AutocompleteEntry(self.frame_controls, textvariable=self.script_var, width=10, completevalues=STOCKS,font=self.FONT)
         self.script_label.grid(row=0, column=0,pady=6, padx=30)

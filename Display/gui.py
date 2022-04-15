@@ -1,6 +1,5 @@
 import tkcalendar as tkcal 
 from datetime import datetime
-from torch import diff
 from ttkwidgets.autocomplete import AutocompleteEntry
 import tkinter as tk
 from tkinter import ttk
@@ -149,6 +148,10 @@ class Display(tk.Frame):
             self.axes.bar(options, total_OI, color=["green", "red"])
             self.axes.set_title(stock_name)
             self.axes.set_ylabel('OI')
+            
+            self.figure.canvas.draw()
+
+            self.figure.canvas.flush_events()
             self.parent.update()
             self.figure.canvas.draw()
             self.figure.canvas.flush_events()

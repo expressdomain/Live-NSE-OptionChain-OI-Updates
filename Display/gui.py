@@ -91,7 +91,7 @@ class Display(tk.Frame):
         total_OI = self.data.values()
 
         # create a figure
-        self.figure = Figure(figsize=(3, 2), dpi=100)
+        self.figure = Figure(figsize=(6, 3), dpi=100)
 
         # create FigureCanvasTkAgg object
         self.figure_canvas = FigureCanvasTkAgg(self.figure, self.parent)

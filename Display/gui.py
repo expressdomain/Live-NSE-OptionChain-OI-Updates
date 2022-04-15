@@ -138,6 +138,7 @@ class Display(tk.Frame):
             self.data = raw_data[1]
             options = self.data.keys()
             total_OI = self.data.values()
+            print(total_OI)
             diff_per = round(((self.data["CE"] - self.data["PE"]) / self.data["CE"]) * 100, 2)
             self.OI_diff_percent_var.set(f"OI Difference: {diff_per}%")
             if diff_per > 0:
@@ -149,6 +150,8 @@ class Display(tk.Frame):
             self.axes.set_title(stock_name)
             self.axes.set_ylabel('OI')
             self.parent.update()
+            self.figure.canvas.draw()
+            self.figure.canvas.flush_events()
             self.cur_stock_var.set("Current Stock: " + stock_name)
             now = datetime.now().strftime("%H:%M:%S")
             self.last_updated_var.set("Last Updated: " + now)

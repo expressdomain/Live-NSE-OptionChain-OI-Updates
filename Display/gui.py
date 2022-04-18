@@ -87,6 +87,10 @@ class Display(tk.Frame):
             'CE' : 0,
             'PE' : 0
         }
+        self.prev_data = {
+            'CE' : 0,
+            'PE' : 0
+        }
         options = self.data.keys()
         total_OI = self.data.values()
 
@@ -113,6 +117,10 @@ class Display(tk.Frame):
         self.OI_diff_percent_lab = tk.Label(self, textvariable = self.OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
         self.OI_diff_percent_lab.pack(pady=5)
 
+        self.prev_OI_diff_percent_var = tk.StringVar(self)
+        self.prev_OI_diff_percent_lab = tk.Label(self, textvariable = self.prev_OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
+        self.prev_OI_diff_percent_lab.pack(pady=5)
+
     def manual_update(self):
         if len(threading.enumerate()) < 2:
             self.load_data()
@@ -138,12 +146,26 @@ class Display(tk.Frame):
             options = self.data.keys()
             total_OI = self.data.values()
             print(total_OI)
-            diff_per = round(((self.data["CE"] - self.data["PE"]) / self.data["CE"]) * 100, 2)
+            diff = (self.data["CE"] - self.data["PE"])
+            diff_per = round((diff / self.data["CE"]) * 100, 2)
+            
             self.OI_diff_percent_var.set(f"OI Difference: {diff_per}%")
             if diff_per > 0:
                 self.OI_diff_percent_lab.config(fg="green")
             else:
                 self.OI_diff_percent_lab.config(fg="red")
+            try:
+                prev_diff = (self.prev_data["CE"] - self.prev_data["PE"])
+                prev_diff_per = round(((diff - prev_diff) / prev_diff) * 100, 2)
+                self.prev_OI_diff_percent_var.set(f"OI Difference from previous update: {prev_diff_per}%")
+
+                if prev_diff_per > 0:
+                    self.prev_OI_diff_percent_lab.config(fg="green")
+                else:
+                    self.prev_OI_diff_percent_lab.config(fg="red")
+            except ZeroDivisionError:
+                self.prev_OI_diff_percent_var.set(f"OI Difference from previous update: 0%")
+
             self.axes.clear()
             self.axes.bar(options, total_OI, color=["green", "red"])
             self.axes.set_title(stock_name)
@@ -158,6 +180,8 @@ class Display(tk.Frame):
             self.cur_stock_var.set("Current Stock: " + stock_name)
             now = datetime.now().strftime("%H:%M:%S")
             self.last_updated_var.set("Last Updated: " + now)
+
+            self.prev_data = self.data.copy()
     
     def refresh(self):
         self.t1 = threading.Thread(target=self.load_data, daemon=True)

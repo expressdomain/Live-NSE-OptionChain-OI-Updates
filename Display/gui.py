@@ -135,8 +135,8 @@ class Display(tk.Frame):
         data = raw_data[0]
         if data is None:
             return
-        data_main = sorted(data, key=lambda i: i['PE OI'], reverse=True)[:2] + sorted(data, key=lambda i: i['CE OI'], reverse=True)[:2]
-        if len(data_main) > 0:
+        data_main = sorted(data, key=lambda i: i['PE OI'], reverse=True)[:1] + sorted(data, key=lambda i: i['CE OI'], reverse=True)[:1]
+        if len(data_main) > 1:
             for i in self.tree.get_children():
                 self.tree.delete(i)
             for i in range(len(data_main)):

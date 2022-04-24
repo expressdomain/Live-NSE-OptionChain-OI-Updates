@@ -25,8 +25,8 @@ def get_data(expiryDate, symbol):
         print("[NO DATA RETURNED]")
         return
     total_oi = {
-        "CE" : 0,
-        "PE" : 0
+        "CE_TOTAL" : 0,
+        "PE_TOTAL" : 0
     }
     result = list()
     for i in data['records']['data']:
@@ -34,9 +34,9 @@ def get_data(expiryDate, symbol):
         if 'PE' in keys and 'CE' in keys:
             if i['expiryDate'] == expiryDate:
                 pe_oi = i.get('PE', {'openInterest' : 0})['openInterest']
-                total_oi["PE"] += pe_oi
+                total_oi["PE_TOTAL"] += pe_oi
                 ce_oi = i.get('CE', {'openInterest' : 0})['openInterest']
-                total_oi["CE"] += ce_oi
+                total_oi["CE_TOTAL"] += ce_oi
                 result.append({
                     'strikePrice' : i['strikePrice'],
                     'PE OI': pe_oi,

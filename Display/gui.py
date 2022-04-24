@@ -75,7 +75,7 @@ class Display(tk.Frame):
         self.script_entry.grid(row=1, column=0,pady=2, padx=30)  
 
         self.delay_label = ttk.Label(self.frame_controls, text="Delay (Mins)", **self.font)
-        self.delay_var = tk.StringVar(value="60")
+        self.delay_var = tk.StringVar(value="5")
         self.delay_input = ttk.Entry(self.frame_controls, textvariable=self.delay_var, width=8)
         self.delay_label.grid(row=0, column=2,pady=6, padx=30)
         self.delay_input.grid(column=2, row=1, padx=2)
@@ -84,15 +84,21 @@ class Display(tk.Frame):
         self.update_btn.grid(column=3, row=0, rowspan=2, padx=2)
          # prepare data
         self.data = {
-            'CE' : 0,
-            'PE' : 0
+            'SCRIPT': "NIFTY",
+            'CE_TOTAL' : 0,
+            'PE_TOTAL' : 0,
+            'PE': 0,
+            'CE': 0
         }
         self.prev_data = {
-            'CE' : 0,
-            'PE' : 0
+            'SCRIPT': "NIFTY",
+            'CE_TOTAL' : 0,
+            'PE_TOTAL' : 0,
+            'PE': 0,
+            'CE': 0
         }
-        options = self.data.keys()
-        total_OI = self.data.values()
+        options = ('CE','PE')
+        total_OI = (self.data['CE_TOTAL'], self.data['PE_TOTAL'])
 
         # create a figure
         self.figure = Figure(figsize=(6, 3), dpi=100)
@@ -112,20 +118,32 @@ class Display(tk.Frame):
         self.axes.set_ylabel('OI')
 
         self.figure_canvas.get_tk_widget().pack(padx=10,side=tk.RIGHT, fill=tk.BOTH, expand=1)
-
+        self.stats_frame = tk.Frame(self)
+        self.stats_frame.pack()
         self.OI_diff_percent_var = tk.StringVar(self)
-        self.OI_diff_percent_lab = tk.Label(self, textvariable = self.OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
-        self.OI_diff_percent_lab.pack(pady=5)
+        self.OI_diff_percent_lab = tk.Label(self.stats_frame, textvariable = self.OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
+        self.OI_diff_percent_lab.grid(row=0, column=0, padx=5, pady=5)
 
         self.prev_OI_diff_percent_var = tk.StringVar(self)
-        self.prev_OI_diff_percent_lab = tk.Label(self, textvariable = self.prev_OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
-        self.prev_OI_diff_percent_lab.pack(pady=5)
+        self.prev_OI_diff_percent_lab = tk.Label(self.stats_frame, textvariable = self.prev_OI_diff_percent_var, font= ('Helvetice', 15, 'bold'))
+        self.prev_OI_diff_percent_lab.grid(row=1, column=0, padx=5, pady=5)
+
+        self.CE_OI_percent_var = tk.StringVar(self)
+        self.CE_OI_percent_lab = tk.Label(self.stats_frame, textvariable = self.CE_OI_percent_var, font= ('Helvetice', 15, 'bold'))
+        self.CE_OI_percent_lab.grid(row=0, column=1, padx=5, pady=5)
+
+        self.PE_OI_percent_var = tk.StringVar(self)
+        self.PE_OI_percent_lab = tk.Label(self.stats_frame, textvariable = self.PE_OI_percent_var, font= ('Helvetice', 15, 'bold'))
+        self.PE_OI_percent_lab.grid(row=1, column=1, padx=5, pady=5)
+
 
     def manual_update(self):
         if len(threading.enumerate()) < 2:
             self.load_data()
         else: print("thread busy")
-
+    def __addlabels(self, x, y):
+        for i in range(len(x)):
+            plt.text(i, y[i], y[i], ha = 'center')
     def load_data(self):
         now = datetime.now().strftime("%H:%M:%S")
         print(f"[REFRESH TIME] {now}")
@@ -142,29 +160,66 @@ class Display(tk.Frame):
             for i in range(len(data_main)):
                 vals = data_main[i].values()
                 self.tree.insert("", tk.END, iid=i, value=tuple(vals))
-            self.data = raw_data[1]
-            options = self.data.keys()
-            total_OI = self.data.values()
-            print(total_OI)
-            diff = (self.data["CE"] - self.data["PE"])
-            diff_per = round((diff / self.data["CE"]) * 100, 2)
             
-            self.OI_diff_percent_var.set(f"OI Difference: {diff_per}%")
-            if diff_per > 0:
+            self.data = raw_data[1]
+            self.data['PE'] = data_main[0]['PE OI']
+            self.data['CE'] = data_main[0]['CE OI']
+            self.data['SCRIPT'] = stock_name
+            
+            options = ('CE','PE')
+            total_OI = (self.data['CE_TOTAL'], self.data['PE_TOTAL'])
+            print(total_OI)
+            tot_diff = (self.data["CE_TOTAL"] - self.data["PE_TOTAL"])
+            tot_diff_per = round((tot_diff / self.data["CE_TOTAL"]) * 100, 2)
+            
+            self.OI_diff_percent_var.set(f"OI Diff: {tot_diff_per}%")
+            if tot_diff_per > 0:
                 self.OI_diff_percent_lab.config(fg="green")
             else:
                 self.OI_diff_percent_lab.config(fg="red")
             try:
-                prev_diff = (self.prev_data["CE"] - self.prev_data["PE"])
-                prev_diff_per = round(((diff - prev_diff) / prev_diff) * 100, 2)
-                self.prev_OI_diff_percent_var.set(f"OI Difference from previous update: {prev_diff_per}%")
+                if self.data['SCRIPT'] == self.prev_data['SCRIPT']:
+                    tot_prev_diff = (self.prev_data["CE_TOTAL"] - self.prev_data["PE_TOTAL"])
+                    tot_prev_diff_per = round(((tot_diff - tot_prev_diff) / tot_prev_diff) * 100, 2)
+                    self.prev_OI_diff_percent_var.set(f"OI Diff prev: {tot_prev_diff_per}%")
 
-                if prev_diff_per > 0:
-                    self.prev_OI_diff_percent_lab.config(fg="green")
+                    if tot_prev_diff_per > 0:
+                        self.prev_OI_diff_percent_lab.config(fg="green")
+                    else:
+                        self.prev_OI_diff_percent_lab.config(fg="red")
                 else:
-                    self.prev_OI_diff_percent_lab.config(fg="red")
+                    self.prev_OI_diff_percent_var.set(f"OI Diff prev: 0%")
             except ZeroDivisionError:
-                self.prev_OI_diff_percent_var.set(f"OI Difference from previous update: 0%")
+                self.prev_OI_diff_percent_var.set(f"OI Diff prev: 0%")
+
+            # CE OI DIFF
+            try:
+                if self.data['SCRIPT'] == self.prev_data['SCRIPT']:
+                    ce_diff = self.data['PE'] - self.prev_data['PE']
+                    ce_diff_per = round((ce_diff / self.prev_data['PE']) * 100, 2)
+                    self.CE_OI_percent_var.set(f"CE Diff: {ce_diff_per}%")
+                    if ce_diff_per > 0:
+                        self.CE_OI_percent_lab.config(fg="green")
+                    else:
+                        self.CE_OI_percent_lab.config(fg="red")
+                else:
+                    self.CE_OI_percent_var.set(f"CE Diff: 0%")
+            except ZeroDivisionError:
+                self.CE_OI_percent_var.set(f"CE Diff: 0%")
+            # PE OI DIFF
+            try:
+                if self.data['SCRIPT'] == self.prev_data['SCRIPT']:
+                    pe_diff = self.data['PE'] - self.prev_data['PE']
+                    pe_diff_per = round((pe_diff / self.prev_data['PE']) * 100, 2)
+                    self.PE_OI_percent_var.set(f"PE Diff: {pe_diff_per}%")
+                    if pe_diff_per > 0:
+                        self.PE_OI_percent_lab.config(fg="green")
+                    else:
+                        self.PE_OI_percent_lab.config(fg="red")
+                else:
+                    self.PE_OI_percent_var.set(f"PE Diff:: 0%")
+            except ZeroDivisionError:
+                self.PE_OI_percent_var.set(f"PE Diff: 0%")
 
             self.axes.clear()
             self.axes.bar(options, total_OI, color=["green", "red"])
@@ -172,8 +227,7 @@ class Display(tk.Frame):
             self.axes.set_ylabel('OI')
             
             self.figure.canvas.draw()
-
-            self.figure.canvas.flush_events()
+            self.__addlabels(list(options), list(total_OI))
             self.parent.update()
             self.figure.canvas.draw()
             self.figure.canvas.flush_events()

@@ -17,3 +17,13 @@ Get Open Interest updates for NSE Stocks &amp; Indices in real time.
 - enter stock/index name
 - choose expiry
 - click update
+
+## Stats
+
+
+## [![Repography logo](https://images.repography.com/logo.svg)](https://repography.com) / Recent activity [![Time period](https://images.repography.com/25176795/programmer2215/Live-NSE-OptionChain-OI-Updates/recent-activity/a923bcd5ecd11f9b9bdb0725489d03e9_badge.svg)](https://repography.com)
+[![Timeline graph](https://images.repography.com/25176795/programmer2215/Live-NSE-OptionChain-OI-Updates/recent-activity/a923bcd5ecd11f9b9bdb0725489d03e9_timeline.svg)](https://github.com/programmer2215/Live-NSE-OptionChain-OI-Updates/commits)
+[![Issue status graph](https://images.repography.com/25176795/programmer2215/Live-NSE-OptionChain-OI-Updates/recent-activity/a923bcd5ecd11f9b9bdb0725489d03e9_issues.svg)](https://github.com/programmer2215/Live-NSE-OptionChain-OI-Updates/issues)
+[![Pull request status graph](https://images.repography.com/25176795/programmer2215/Live-NSE-OptionChain-OI-Updates/recent-activity/a923bcd5ecd11f9b9bdb0725489d03e9_prs.svg)](https://github.com/programmer2215/Live-NSE-OptionChain-OI-Updates/pulls)
+[![Top contributors](https://images.repography.com/25176795/programmer2215/Live-NSE-OptionChain-OI-Updates/recent-activity/a923bcd5ecd11f9b9bdb0725489d03e9_users.svg)](https://github.com/programmer2215/Live-NSE-OptionChain-OI-Updates/graphs/contributors)
+

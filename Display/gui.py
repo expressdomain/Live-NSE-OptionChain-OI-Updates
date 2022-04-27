@@ -3,6 +3,7 @@ from datetime import datetime
 from ttkwidgets.autocomplete import AutocompleteEntry
 import tkinter as tk
 from tkinter import ttk
+import pyperclip
 from matplotlib import pyplot as plt
 import matplotlib
 
@@ -36,7 +37,7 @@ class Display(tk.Frame):
         self.font = {
             'font': self.FONT
         }
-
+        
         self.cur_stock_var = tk.StringVar(self)
         self.cur_stock_lab = tk.Label(self, textvariable = self.cur_stock_var, font= self.FONT)
         self.cur_stock_lab.pack(pady=10)
@@ -53,6 +54,12 @@ class Display(tk.Frame):
         self.tree.heading('#1', text='Strike Prc.')
         self.tree.heading('#2', text='PE OI')
         self.tree.heading('#3', text='CE OI')
+        
+
+        self.tree.bind("<Button-3>", self.my_popup)
+
+        self.right_click_menu = tk.Menu(self.tree, tearoff=False)
+        self.right_click_menu.add_command(label="Copy Strike Price", command=self.copy_strike_price)
         
         self.tree.tag_configure(tagname="green", background="#4feb34")
         self.tree.tag_configure(tagname="red", background="#f03329")
@@ -189,14 +196,16 @@ class Display(tk.Frame):
                         self.prev_OI_diff_percent_lab.config(fg="red")
                 else:
                     self.prev_OI_diff_percent_var.set(f"OI Diff prev: 0%")
+                    self.prev_OI_diff_percent_lab.config(fg="black")
             except ZeroDivisionError:
                 self.prev_OI_diff_percent_var.set(f"OI Diff prev: 0%")
+                self.prev_OI_diff_percent_lab.config(fg="black")
 
             # CE OI DIFF
             try:
                 if self.data['SCRIPT'] == self.prev_data['SCRIPT']:
-                    ce_diff = self.data['PE'] - self.prev_data['PE']
-                    ce_diff_per = round((ce_diff / self.prev_data['PE']) * 100, 2)
+                    ce_diff = self.data['CE'] - self.prev_data['CE']
+                    ce_diff_per = round((ce_diff / self.prev_data['CE']) * 100, 2)
                     self.CE_OI_percent_var.set(f"CE Diff: {ce_diff_per}%")
                     if ce_diff_per > 0:
                         self.CE_OI_percent_lab.config(fg="green")
@@ -204,8 +213,10 @@ class Display(tk.Frame):
                         self.CE_OI_percent_lab.config(fg="red")
                 else:
                     self.CE_OI_percent_var.set(f"CE Diff: 0%")
+                    self.CE_OI_percent_lab.config(fg="black")
             except ZeroDivisionError:
                 self.CE_OI_percent_var.set(f"CE Diff: 0%")
+                self.CE_OI_percent_lab.config(fg="black")
             # PE OI DIFF
             try:
                 if self.data['SCRIPT'] == self.prev_data['SCRIPT']:
@@ -217,9 +228,11 @@ class Display(tk.Frame):
                     else:
                         self.PE_OI_percent_lab.config(fg="red")
                 else:
-                    self.PE_OI_percent_var.set(f"PE Diff:: 0%")
+                    self.PE_OI_percent_var.set(f"PE Diff: 0%")
+                    self.PE_OI_percent_lab.config(fg="black")
             except ZeroDivisionError:
                 self.PE_OI_percent_var.set(f"PE Diff: 0%")
+                self.PE_OI_percent_lab.config(fg="black")
 
             self.axes.clear()
             self.axes.bar(options, total_OI, color=["green", "red"])
@@ -242,7 +255,15 @@ class Display(tk.Frame):
         self.t1.start()
         delay = int(float(self.delay_var.get()) * 60 * 1000)
         self.parent.after(delay, self.refresh)
+    
+    def copy_strike_price(self):
+            cur_row = self.tree.focus()
+            pyperclip.copy(self.tree.item(cur_row)['values'][0])
 
+
+
+    def my_popup(self, e):
+        self.right_click_menu.tk_popup(e.x_root, e.y_root)
 '''root = tk.Tk()
 a = Display(root)
 a.pack(side="top", fill="both", expand=True)

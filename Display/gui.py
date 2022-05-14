@@ -200,11 +200,12 @@ class Display(tk.Frame):
                 if vals[0] in self.strike_price_watchlist:
                     self.strike_price_watchlist.remove(vals[0])
                 self.tree.insert("", tk.END, iid=i, value=vals)
-            
-            for strikePrice in self.strike_price_watchlist:
-                strike_price_data = get_data(date, stock_name, _filter=True, strike_price=strikePrice)
-                self.tree.insert("", tk.END, value=(strikePrice, strike_price_data['PE OI'], strike_price_data['CE OI']))
-
+            if stock_name == self.prev_data['SCRIPT']:
+                for strikePrice in self.strike_price_watchlist:
+                    strike_price_data = get_data(date, stock_name, _filter=True, strike_price=strikePrice)
+                    self.tree.insert("", tk.END, value=(strikePrice, strike_price_data['PE OI'], strike_price_data['CE OI']))
+            else:
+                self.strike_price_watchlist = []
 
             
             self.data = raw_data[1]

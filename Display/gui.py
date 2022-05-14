@@ -17,6 +17,7 @@ from matplotlib.backends.backend_tkagg import (
 import threading
 
 from utils.scrape import get_data
+from utils.scrape import validate_strike_price
 
 with open(r"./Display/stocks.txt") as f:
     STOCKS = [x.strip() for x in f]
@@ -60,6 +61,7 @@ class Display(tk.Frame):
 
         self.right_click_menu = tk.Menu(self.tree, tearoff=False)
         self.right_click_menu.add_command(label="Copy Strike Price", command=self.copy_strike_price)
+        self.right_click_menu.add_command(label="Remove Strike Price", command=self.remove_strike_price)
         
         self.tree.tag_configure(tagname="green", background="#4feb34")
         self.tree.tag_configure(tagname="red", background="#f03329")
@@ -87,8 +89,22 @@ class Display(tk.Frame):
         self.delay_label.grid(row=0, column=2,pady=6, padx=30)
         self.delay_input.grid(column=2, row=1, padx=2)
 
+        self.strike_price_lab = ttk.Label(self.frame_controls, text="Strike Price Filter", font = ('Helvetice', 16, 'bold'))
+        self.strike_price_lab.grid(row=2, column=0, columnspan=4, pady=12, padx=30)
+
+        self.strike_price_label = ttk.Label(self.frame_controls, text="Strike Price", **self.font)
+        self.strike_price_var = tk.StringVar(self.frame_controls)
+        self.strike_price_input = ttk.Entry(self.frame_controls, textvariable=self.strike_price_var, width=8, font=self.FONT)
+        self.strike_price_label.grid(row=3, column=0, columnspan=2, pady=6, padx=30)
+        self.strike_price_input.grid(row=4, column=0, columnspan=2, padx=2)
+        self.strike_price_watchlist = list()
+
+        self.filter_btn = ttk.Button(self.frame_controls, text="Add", command=self.add_strike_price)
+        self.filter_btn.grid(column=1, row=3, columnspan=3, rowspan=2, padx=2)
+        
         self.update_btn = ttk.Button(self.frame_controls, text="Update Info", command=self.manual_update)
         self.update_btn.grid(column=3, row=0, rowspan=2, padx=2)
+
          # prepare data
         self.data = {
             'SCRIPT': "NIFTY",
@@ -148,9 +164,24 @@ class Display(tk.Frame):
         if len(threading.enumerate()) < 2:
             self.load_data()
         else: print("thread busy")
+    
     def __addlabels(self, x, y):
         for i in range(len(x)):
             plt.text(i, y[i], y[i], ha = 'center')
+    
+    def add_strike_price(self):
+        strike_price = self.strike_price_var.get().strip()
+        if not strike_price.isnumeric():
+            print('Invalid Strike Price')
+            return
+        strike_price = int(strike_price)
+        date = datetime.strftime(self.expiry.get_date(), '%d-%b-%Y')
+        stock_name = self.script_var.get().strip()
+        if strike_price not in self.strike_price_watchlist:
+            if validate_strike_price(date, stock_name, strike_price):
+                self.strike_price_watchlist.append(strike_price)
+                self.manual_update()
+
     def load_data(self):
         now = datetime.now().strftime("%H:%M:%S")
         print(f"[REFRESH TIME] {now}")
@@ -165,8 +196,16 @@ class Display(tk.Frame):
             for i in self.tree.get_children():
                 self.tree.delete(i)
             for i in range(len(data_main)):
-                vals = data_main[i].values()
-                self.tree.insert("", tk.END, iid=i, value=tuple(vals))
+                vals = tuple(data_main[i].values())
+                if vals[0] in self.strike_price_watchlist:
+                    self.strike_price_watchlist.remove(vals[0])
+                self.tree.insert("", tk.END, iid=i, value=vals)
+            
+            for strikePrice in self.strike_price_watchlist:
+                strike_price_data = get_data(date, stock_name, _filter=True, strike_price=strikePrice)
+                self.tree.insert("", tk.END, value=(strikePrice, strike_price_data['PE OI'], strike_price_data['CE OI']))
+
+
             
             self.data = raw_data[1]
             self.data['PE'] = data_main[0]['PE OI']
@@ -260,7 +299,11 @@ class Display(tk.Frame):
             cur_row = self.tree.focus()
             pyperclip.copy(self.tree.item(cur_row)['values'][0])
 
-
+    def remove_strike_price(self):
+        cur_row = self.tree.focus()
+        price = self.tree.item(cur_row)['values'][0]
+        self.strike_price_watchlist.remove(price)
+        self.manual_update()
 
     def my_popup(self, e):
         self.right_click_menu.tk_popup(e.x_root, e.y_root)
